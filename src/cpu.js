@@ -11,7 +11,12 @@ const {
     REGISTER_7,
     REGISTER_8
 } = require('./registers');
-const instructions = require('./instructions');
+const {MOV_LIT_R1, MOV_LIT_R2, ADD_REG_REG} = require('./instructions');
+
+const AVAILABLE_INSTRUCTIONS = [
+    MOV_LIT_R1, MOV_LIT_R2, ADD_REG_REG
+];
+const DEBUG_SEPARATOR = '='.repeat(50);
 
 class CPU {
     constructor(memory) {
@@ -32,13 +37,30 @@ class CPU {
         }, {})
     }
 
-    debug() {
-        this.registerNames.forEach(name => {
+    showRegistersInfo() {
+        this.registerNames.forEach((name) => {
             const registerValue =  this.getRegister(name);
+            const formattedName = name.length === 2
+                ? `${name}: `
+                : `${name}:`;
+            const hexRepresentation = `0x${registerValue.toString(16).padStart(4, '0')}`;
+            const decimalRepresentation = `${registerValue.toString(10).padStart(8, '0')}`;
 
-            console.log(`${name}: 0x${registerValue.toString(16).padStart(4, '0')}`);
+            console.log(`${formattedName} ${hexRepresentation} | ${decimalRepresentation}`);
         });
         console.log();
+    }
+
+    showInstructionInfo(intructionValue) {
+        const availableInstruction = AVAILABLE_INSTRUCTIONS.find(availableInstruction => {
+            return availableInstruction.value === intructionValue;
+        });
+
+        if (availableInstruction) {
+            console.log(`Executing instruction: ${availableInstruction.label}`);
+        } else {
+            console.log('No instruction available');
+        }
     }
 
     getRegister(name) {
@@ -79,28 +101,25 @@ class CPU {
         return instruction;
     }
 
-    decode() {
+    decode() { // Not implemented yet, 'execute' combines both decode and execution
 
     }
 
     execute(instruction) {
         switch (instruction) {
-            // Move literal into r1 register
-            case instructions.MOV_LIT_R1: {
+            case MOV_LIT_R1.value: {
                 const literal = this.fetch16();
                 this.setRegister(REGISTER_1, literal);
                 break;
             }
 
-            // Move literal into r2 register
-            case instructions.MOV_LIT_R2: {
+            case MOV_LIT_R2.value: {
                 const literal = this.fetch16();
                 this.setRegister(REGISTER_2, literal);
                 break;
             }
 
-            // Move literal into r2 register
-            case instructions.ADD_REG_REG: {
+            case ADD_REG_REG.value: {
                 const register1 = this.fetch();
                 const register2 = this.fetch();
                 const registerValue1 = this.registers.getUint16(register1 * 2);
@@ -113,8 +132,20 @@ class CPU {
         }
     }
 
-    step() {
+    step(withDebug = true) {
+        if (withDebug) {
+            console.log(DEBUG_SEPARATOR);
+            console.log(`New step iteration`);
+            console.log(DEBUG_SEPARATOR);
+            this.showRegistersInfo();
+        }
+
         const instruction = this.fetch();
+
+        if (withDebug) {
+            this.showInstructionInfo(instruction);
+            console.log();
+        }
 
         return this.execute(instruction);
     }
