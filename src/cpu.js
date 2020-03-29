@@ -110,13 +110,13 @@ class CPU {
             case MOV_LIT_R1.value: {
                 const literal = this.fetch16();
                 this.setRegister(REGISTER_1, literal);
-                break;
+                return instruction;
             }
 
             case MOV_LIT_R2.value: {
                 const literal = this.fetch16();
                 this.setRegister(REGISTER_2, literal);
-                break;
+                return instruction;
             }
 
             case ADD_REG_REG.value: {
@@ -127,7 +127,12 @@ class CPU {
                 const result = registerValue1 + registerValue2;
                 
                 this.setRegister(ACCUMULATOR, result);
-                break;
+                return instruction;
+            }
+
+            default: {
+                console.log('End of execution'); // TODO to logging info
+                return instruction;
             }
         }
     }
