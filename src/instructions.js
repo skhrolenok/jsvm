@@ -8,7 +8,7 @@ const MOV_LIT_R2 = {
 };
 const ADD_REG_REG = {
     value: 0x12,
-    label: 'Add register1 to register2'
+    label: 'Adds register1 to register2'
 }
 
 module.exports = {
