@@ -9,6 +9,8 @@ class Operator {
     }
 
     add(a, b) {
+        console.log(`Run add with arguments ${a}, ${b}`)
+
         if ((a > 0xffff) || (b > 0xffff) || (a < 0) || (b < 0)) {
             console.log('Wrong input, only values from 0 to 65535');
             return;
@@ -39,6 +41,14 @@ class Operator {
         const result = this.cpu.getRegister(ACCUMULATOR);
 
         return result;
+    }
+
+    substract(a, b) {
+        console.log('Run substraction with arguments ${a, b}');
+
+        return b >= a
+            ? 0
+            : this.add(a, -b);
     }
 
     runExecutionLoop() {
