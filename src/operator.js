@@ -2,6 +2,11 @@ const {decimalToHexGroups, hexGroupToValue} = require('./utils/numbers');
 const instructions = require('./instructions');
 const {ACCUMULATOR} = require('./registers');
 
+const IP = 0;
+const ACC = 1;
+const R1 = 2;
+const R2 = 3;
+
 class Operator {
     constructor(cpu, memoryTape) {
         this.cpu = cpu;
@@ -22,19 +27,27 @@ class Operator {
         const secondHexGroupValue = hexGroupToValue(secondHexGroup);
         const thirdHexGroupValue = hexGroupToValue(thirdHexGroup);
         const fourthHexGroupValue = hexGroupToValue(fourthHexGroup);
+        let i = 0;
     
-        this.memoryTape[0] = instructions.MOV_LIT_R1.value;
-        this.memoryTape[1] = firstHexGroupValue;
-        this.memoryTape[2] = secondHexGroupValue;
+        this.memoryTape[i++] = instructions.MOV_LIT_REG.value;
+        this.memoryTape[i++] = firstHexGroupValue;
+        this.memoryTape[i++] = secondHexGroupValue;
+        this.memoryTape[i++] = R1;
     
-        this.memoryTape[3] = instructions.MOV_LIT_R2.value;
-        this.memoryTape[4] = thirdHexGroupValue;
-        this.memoryTape[5] = fourthHexGroupValue;
+        this.memoryTape[i++] = instructions.MOV_LIT_REG.value;
+        this.memoryTape[i++] = thirdHexGroupValue;
+        this.memoryTape[i++] = fourthHexGroupValue;
+        this.memoryTape[i++] = R2;
     
-        this.memoryTape[6] = instructions.ADD_REG_REG.value;
-        this.memoryTape[7] = 2;
-        this.memoryTape[8] = 3;
-    
+        this.memoryTape[i++] = instructions.ADD_REG_REG.value;
+        this.memoryTape[i++] = R1;
+        this.memoryTape[i++] = R2;
+
+        this.memoryTape[i++] = instructions.MOV_REG_MEM.value;
+        this.memoryTape[i++] = ACC;
+        this.memoryTape[i++] = 0x01;
+        this.memoryTape[i++] = 0x00;
+
         this.runExecutionLoop();
         this.clearMemory();
 

@@ -11,10 +11,17 @@ const {
     REGISTER_7,
     REGISTER_8
 } = require('./registers');
-const {MOV_LIT_R1, MOV_LIT_R2, ADD_REG_REG} = require('./instructions');
+const {
+    MOV_LIT_REG,
+    MOV_REG_REG,
+    MOV_REG_MEM,
+    MOV_MEM_REG, 
+    ADD_REG_REG,
+    JMP_NOT_EQ
+} = require('./instructions');
 
 const AVAILABLE_INSTRUCTIONS = [
-    MOV_LIT_R1, MOV_LIT_R2, ADD_REG_REG
+    MOV_LIT_REG, MOV_REG_REG, ADD_REG_REG
 ];
 const DEBUG_SEPARATOR = '='.repeat(50);
 
@@ -49,6 +56,15 @@ class CPU {
             console.log(`${formattedName} ${hexRepresentation} | ${decimalRepresentation}`);
         });
         console.log();
+    }
+
+    viewMemoryAt(address) {
+        const nextEightBytes = Array
+            .from({length: 8}, (_, i) => this.memory.getUint8(address + i))
+            .map(value => `0x${value.toString(16).padStart(2, '0')}`);
+
+        console.log(`|CMD |  VALUE  |REG |CMD |  VALUE  |REG |`.padStart(83, ' '));
+        console.log(`Next 8 bytes of memory in address 0x${address.toString(16).padStart(4, '0')}: |${nextEightBytes.join('|')}|`);
     }
 
     showInstructionInfo(intructionValue) {
@@ -107,15 +123,38 @@ class CPU {
 
     execute(instruction) {
         switch (instruction) {
-            case MOV_LIT_R1.value: {
+            case MOV_LIT_REG.value: {
                 const literal = this.fetch16();
-                this.setRegister(REGISTER_1, literal);
+                const register = (this.fetch() % this.registerNames.length) * 2;
+                this.registers.setUint16(register, literal);
+
                 return instruction;
             }
 
-            case MOV_LIT_R2.value: {
-                const literal = this.fetch16();
-                this.setRegister(REGISTER_2, literal);
+            case MOV_REG_REG.value: {
+                const registerFrom = (this.fetch() % this.registerNames.length) * 2;
+                const registerTo = (this.fetch() % this.registerNames.length) * 2;
+                const value = this.registers.getUint16(registerFrom);
+                this.registers.setUint16(registerTo, value);
+
+                return instruction;
+            }
+
+            case MOV_REG_MEM.value: {
+                const registerFrom = (this.fetch() % this.registerNames.length) * 2;
+                const address = this.fetch16();
+                const value = this.registers.getUint16(registerFrom);
+                this.memory.setUint16(address, value);
+
+                return instruction;
+            }
+
+            case MOV_MEM_REG.value: {
+                const address = this.fetch16();
+                const registerTo = (this.fetch() % this.registerNames.length) * 2;
+                const value = this.memory.getUint16(address);
+                this.registers.setUint16(registerTo, value);
+
                 return instruction;
             }
 
@@ -127,6 +166,17 @@ class CPU {
                 const result = registerValue1 + registerValue2;
                 
                 this.setRegister(ACCUMULATOR, result);
+                return instruction;
+            }
+
+            case JMP_NOT_EQ.value: {
+                const value = this.fetch16();
+                const address = this.fetch16();
+
+                if (value !== this.getRegister('acc')) {
+                    this.setRegister('ip', address);
+                }
+
                 return instruction;
             }
 
@@ -143,6 +193,8 @@ class CPU {
             console.log(`New step iteration`);
             console.log(DEBUG_SEPARATOR);
             this.showRegistersInfo();
+            this.viewMemoryAt(this.getRegister('ip'));
+            this.viewMemoryAt(0x0100);
         }
 
         const instruction = this.fetch();
